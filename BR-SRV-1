@@ -21,6 +21,8 @@ useradd sshuser -u 1010
 id sshuser
 
 passwd sshuser
+P@ssw0rd
+P@ssw0rd
 
 echo '%WHEEL_USERS ALL=(ALL:ALL) NOPASSWD: ALL' >> /etc/sudoers
 usermod -aG wheel sshuser
