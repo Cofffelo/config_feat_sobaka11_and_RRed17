@@ -1,0 +1,68 @@
+hostnamectl set-hostname br-srv.au-team.irpo; exec bash
+hostnamectl
+
+nano /etc/net/ifaces/ens18/options
+BOOTPROTO=static
+TYPE=eth
+DISABLED=no
+
+nano /etc/net/ifaces/ens18/ipv4address
+192.168.3.10/27
+
+nano /etc/net/ifaces/ens18/ipv4route
+default via 192.168.3.1
+
+systemctl restart network
+ping 8.8.8.8
+
+apt-get update
+
+useradd sshuser -u 1010
+id sshuser
+
+passwd sshuser
+
+echo '%WHEEL_USERS ALL=(ALL:ALL) NOPASSWD: ALL' >> /etc/sudoers
+usermod -aG wheel sshuser
+
+nano /etc/openssh/sshd_config
+Port 2024
+MaxAuthTries 2
+AllowUsers sshuser
+PermitRootLogin no
+Banner /root/banner
+
+nano /root/banner
+Authorized access only
+
+systemctl enable --now sshd
+systemctl restart sshd
+
+apt-get remove bind9 -y
+
+apt-get install task-samba-dc -y
+
+nano /etc/resolv.conf
+domain ak.local
+nameserver 8.8.8.8
+nameserver 127.0.0.1
+
+rm -rf /etc/samba/smb.conf
+
+nano /etc/hosts
+192.168.3.10	br-srv.au-team.irpo
+
+samba-tool domain provision
+
+mv -f /var/lib/samba/private/krb5.conf /etc/krb5.conf
+
+systemctl enable smb
+systemctl start smb
+
+nano /etc/rc.d/rc.local
+#!/bin/sh -e
+systemctl restart network
+systemctl restart samba
+exit 0
+
+chmod +x /etc/rc.d/rc.local
