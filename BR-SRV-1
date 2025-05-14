@@ -59,7 +59,7 @@ samba-tool domain provision
 mv -f /var/lib/samba/private/krb5.conf /etc/krb5.conf
 
 systemctl enable smb
-systemctl start smb
+systemctl start samba
 
 nano /etc/rc.d/rc.local
 #!/bin/sh -e
