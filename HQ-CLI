@@ -1,0 +1,88 @@
+#странный конфиг но по идее рабочий я разберусь завтра
+#!/bin/bash
+
+hostnamectl set-hostname hq-cli.au-team.irpo
+
+echo "Обновляем систему..."
+apt-get update || { echo 'Ошибка обновления!'; exit 1; }
+
+echo "Устанавливаем NFS-client..."
+apt-get install nfs-clients -y || { echo 'Ошибка установки NFS-common!'; exit 1; }
+
+echo "Устанавливаем python3"
+apt-get install python3 -y || { echo 'Ошибка установки python3!'; exit 1; }
+
+echo "Создаем точку монтирования..."
+mkdir -p /mnt/nfs || { echo 'Ошибка создания директории!'; exit 1; }
+
+echo "Настраиваем автоматическое монтирование..."
+cat <<EOF | tee -a /etc/fstab >&2
+192.168.1.10:/raid5/nfs  /mnt/nfs  nfs  defaults  0  0
+EOF
+
+echo "Монтируем раздел..."
+mount -a && mount -v || { echo 'Ошибка монтирования!'; exit 1; }
+
+echo "Тестовая запись файла..."
+touch /mnt/nfs/bbbbb || { echo 'Ошибка записи файла!'; exit 1; }
+
+echo "Отключаем службу Chrony..."
+systemctl disable --now chronyd || { echo 'Ошибка отключения Chrony!'; exit 1; }
+
+echo "Устанавливаем Systemd Timesync..."
+apt-get update && apt-get install systemd-timesyncd -y || { echo 'Ошибка установки Systemd Timesync!'; exit 1; }
+
+echo "Настраиваем timesyncd..."
+cat <<EOF | tee /etc/systemd/timesyncd.conf >&2
+[Time]
+NTP=192.168.1.1
+EOF
+
+echo "Активируем сервис TimeSync..."
+systemctl enable --now systemd-timesyncd || { echo 'Ошибка активации TimeSync!'; exit 1; }
+
+echo "Просмотр состояния синхронизации времени..."
+timedatectl timesync-status
+
+echo "Создаем пользователя SSH..."
+useradd sshuser -u 1010 || { echo 'Ошибка добавления пользователя!'; exit 1; }
+
+echo "Проверяем идентификатор пользователя..."
+id sshuser
+
+echo "Меняем пароль пользователя..."
+passwd sshuser
+
+echo "Редактируем sudoers-файл..."
+cat <<EOF | tee -a /etc/sudoers >&2
+WHEEL_USERS ALL=(ALL:ALL) NOPASSWD: ALL
+EOF
+
+echo "Добавляем пользователя в группу wheel..."
+usermod -aG wheel sshuser || { echo 'Ошибка добавления в группу!'; exit 1; }
+
+echo "Настраиваем SSH-сервер..."
+cat <<EOF | tee /etc/openssh/sshd_config >&2
+Port 22
+MaxAuthTries 2
+AllowUsers sshuser
+PermitRootLogin no
+Banner /root/banner
+EOF
+
+echo "Создаем баннер авторизации..."
+sh -c 'echo "Authorized access only" > /root/banner'
+
+echo "Перезапускаем SSH-сервис..."
+systemctl enable --now sshd && systemctl restart sshd || { echo 'Ошибка запуска SSH!'; exit 1; }
+
+echo "Устанавливаем Яндекс Браузер..."
+apt-get update && apt-get install yandex-browser-stable -y || { echo 'Ошибка установки Яндекс-Браузера!'; exit 1; }
+
+echo "Настраиваем nameserver"
+cat <<EOF | tee /etc/resolv.conf >&2
+search au-team.irpo
+
+echo "Удаляем Python2.7"
+rm /usr/bin/python2.7 -yes
+nameserver 192.168.1.2
