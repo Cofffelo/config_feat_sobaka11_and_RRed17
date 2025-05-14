@@ -1,113 +1,50 @@
-# Создаем директории для интерфейсов
-mkdir -p /etc/net/ifaces/ens19
-mkdir -p /etc/net/ifaces/ens19.100
-mkdir -p /etc/net/ifaces/ens19.200
-mkdir -p /etc/net/ifaces/ens19.999
-mkdir -p /etc/net/ifaces/iptunnel
+nano /etc/net/ifaces/ens18/options
+BOOTPROTO=static
+TYPE=eth
+DISABLED=no
 
+nano /etc/net/ifaces/ens18/ipv4address
+172.16.5.2/28
 
+nano /etc/net/ifaces/ens18/ipv4aroute
+default via 172.16.5.1
 
+mkdir /etc/net/ifaces/ens19
+mkdir /etc/net/ifaces/ens19.100
+mkdir /etc/net/ifaces/ens19.200
+mkdir /etc/net/ifaces/ens19.999
+mkdir /etc/net/ifaces/iptunnel
 
+nano /etc/net/ifaces/ens18/options
+BOOTPROTO=static
+TYPE=eth
+DISABLED=no
 
-
-
-
-
-# Настраиваем интерфейс ens19 (статический IP)
 nano /etc/net/ifaces/ens19/options
 BOOTPROTO=static
 TYPE=eth
-CONFIG_WIRELESS=no
-SYSTEMD_BOOTPROTO=dhcp4
-CONFIG_IPV4=yes
 DISABLED=no
-NM_CONTROLLED=no
-SYSTEMD_CONTROLLED=no
 
-
-
-
-
-
-
-
-
-
-# Настраиваем VLAN ens19.100
 nano /etc/net/ifaces/ens19.100/options
 BOOTPROTO=static
 TYPE=vlan
 HOST=ens19
 VID=100
-CONFIG_WIRELESS=no
-SYSTEMD_BOOTPROTO=dhcp4
-CONFIG_IPV4=yes
 DISABLED=no
-NM_CONTROLLED=no
-SYSTEMD_CONTROLLED=no
 
-nano /etc/net/ifaces/ens19.100/ipv4address
-192.168.1.1/26
-
-
-
-
-
-
-
-
-
-# Настраиваем VLAN ens19.200
 nano /etc/net/ifaces/ens19.200/options
 BOOTPROTO=static
 TYPE=vlan
 HOST=ens19
 VID=200
-CONFIG_WIRELESS=no
-SYSTEMD_BOOTPROTO=dhcp4
-CONFIG_IPV4=yes
 DISABLED=no
-NM_CONTROLLED=no
-SYSTEMD_CONTROLLED=no
 
-nano /etc/net/ifaces/ens19.200/ipv4address
-192.168.2.1/28
-EOF
-
-
-
-
-
-
-
-# Настраиваем VLAN ens19.999
 nano /etc/net/ifaces/ens19.999/options
 BOOTPROTO=static
 TYPE=vlan
 HOST=ens19
 VID=999
-CONFIG_WIRELESS=no
-SYSTEMD_BOOTPROTO=dhcp4
-CONFIG_IPV4=yes
 DISABLED=no
-NM_CONTROLLED=no
-SYSTEMD_CONTROLLED=no
-
-nano /etc/net/ifaces/ens19.999/ipv4address
-192.168.99.1/29
-
-
-
-
-
-
-
-
-
-
-# Настраиваем iptunnel
-nano /etc/net/ifaces/iptunnel/ipv4address
-10.0.0.1/28
 
 nano /etc/net/ifaces/iptunnel/options
 TYPE=iptun
@@ -116,188 +53,103 @@ TUNLOCAL=172.16.4.2
 TUNREMOTE=172.16.5.2
 TUNOPTIONS='ttl 64'
 
+nano /etc/net/ifaces/ens19.200/ipv4address
+192.168.2.1/28
+
+nano /etc/net/ifaces/ens19.100/ipv4address
+192.168.1.1/26
+
+nano /etc/net/ifaces/ens19.999/ipv4address
+192.168.99.1/29
+
+nano /etc/net/ifaces/iptunnel/ipv4address
+10.0.0.1/28
+
 nano /etc/net/ifaces/iptunnel/ipv4route
 192.168.4.0/24 via 10.0.0.2
 
-
-
-
-
-
-
-
-# Включаем форвардинг пакетов
 nano /etc/net/sysctl.conf
 net.ipv4.ip_forward = 1
 net.ipv4.conf.default.rp_filter = 1
-net.ipv4.icmp_echo_ignore_broadcasts = 1
-net.ipv4.tcp_syncookies = 1
+net.ipv4.icmp_echo_ignore_broadcasts = 1      ### подобный набор говна и цифр - "Трафарет" или "Пример" с которым мы сверяем свой конфиг.
+net.ipv4.tcp_syncookies = 1                              Если всё ок - то просто выходим, и пишем команду ниже.
 net.ipv4.tcp_timestamps = 0
 
 sysctl -p
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# Очищаем существующие правила iptables и настраиваем NAT
 iptables -F
 iptables -t nat -A POSTROUTING -o ens18 -j MASQUERADE
 iptables-save > /etc/sysconfig/iptables
 
-
-
-
-
-ВНИМАНИЕ!!! НЕ НАСТРОЕН ENS18.
-
-nano /etc/net/ifaces/ens18/ipv4address
-172.16.5.2/28
-
-nano /etc/net/ifaces/ens18/ipv4aroute
-default via 172.16.5.1
-
-ПОКА НЕ ЗАБЫЛ: В options BOOTPROTO=static!!!!!!!!!!!!! это касается и ens18 РОУТЕРА BR-RTR!!!!!
-
-
-
-
-
-
-
-
-# Перезапускаем сеть
 service network restart
 
-# Добавляем IPTABLES в автозапуск
-systemctl enable iptables
-systemctl start iptables
+systemctl enable --now iptables
+systemctl restart iptables
 
-# Настраиваем DNS
 nano /etc/resolv.conf
 nameserver 8.8.8.8
 
-# Обновляем пакеты и устанавливаем dnsmasq
 apt-get update
 apt-get install dnsmasq -y
 
-# Настраиваем dnsmasq
-cat <<EOF > /etc/dnsmasq.conf
+nano /etc/dnsmasq.conf
 no-resolv
 domain=au-team.irpo
 dhcp-range=192.168.2.2,192.168.2.15,999h
 dhcp-option=3,192.168.2.1
 dhcp-option=6,192.168.1.10
 interface=ens19.200
-EOF
 
-# Перезапускаем dnsmasq
-systemctl restart dnsmasq
 systemctl enable --now dnsmasq
+systemctl restart dnsmasq
 
-# Создаем пользователя net_admin
 useradd net_admin -m
 passwd net_admin
+P@$$word
+P@$$word
 
-
-# Добавляем пользователя в sudoers
 echo 'net_admin ALL=(ALL:ALL) NOPASSWD: ALL' >> /etc/sudoers
 
-# Настраиваем chrony
 apt-get install chrony -y
-cat <<EOF > /etc/chrony.conf
-local 192.168.44.5
+nano /etc/chrony.conf
+local stratum 5
 allow 192.168.1.0/26
 allow 192.168.2.0/28
 allow 172.16.5.0/28
 allow 192.168.3.0/27
 allow 0/0
-EOF
 
 systemctl enable --now chrony
 systemctl restart chrony
+
 timedatectl set-ntp 0
 timedatectl
 
-# Настраиваем SSH
-cat <<EOF > /etc/openssh/sshd_config
-Port 22
+nano /etc/openssh/sshd_config
+Port 2024
 MaxAuthTries 2
 AllowUsers net_admin
 PermitRootLogin no
 Banner /root/banner
-EOF
 
-cat <<EOF > /root/banner
+nano /root/banner
 Authorized access only
-
-EOF
 
 systemctl enable --now sshd
 systemctl restart sshd
 
-# Переименовываем машину
-hostnamectl set-hostname hq-rtr.au-team.irpo
-
-# Настраиваем frr
 apt-get install frr -y
-cat <<EOF > /etc/frr/daemons
+nano /etc/frr/daemons
+
+                  ВНИМАТЕЛЬНО!!! Ищем подобный массив строчек
 bgpd=no
-ospfd=yes
-ospf6d=yes
+ospfd=yes #ЗДЕСЬ ДОЛЖНО БЫТЬ no, меняем на yes
+ospf6d=yes #ЗДЕСЬ ДОЛЖНО БЫТЬ no, меняем на yes
 ripd=no
 ripngd=no
 isisd=no
 pimd=no
-pim6d=no
-ldpd=no
-nhrpd=no
-eigrpd=no
-babeld=no
-sharpd=no
-pbrd=no
-bfdd=no
-fabricd=no
-vrrpd=no
-pathd=no
-
-vtysh_enable=yes
-zebra_options="  -A 127.0.0.1 -s 90000000"
-mgmtd_options="  -A 127.0.0.1"
-bgpd_options="   -A 127.0.0.1"
-ospfd_options="  -A 127.0.0.1"
-ospf6d_options="  -A ::1"
-ospfd_options="  -A 127.0.0.1"
-ripd_options="  -A ::1"
-ripngd_options="  -A 127.0.0.1"
-isisd_options="  -A 127.0.0.1"
-pimd_options="  -A ::1"
-pim6d_options="  -A 127.0.0.1"
-ldpd_options="  -A 127.0.0.1"
-nhrpd_options="  -A 127.0.0.1"
-eigrpd_options="  -A 127.0.0.1"
-babeld_options="  -A 127.0.0.1"
-sharpd_options="  -A 127.0.0.1"
-pbrd_options="  -A 127.0.0.1"
-bfdd_options="  -A 127.0.0.1"
-fabricd_options="  -A 127.0.0.1"
-vrrpd_options="  -A 127.0.0.1"
-pathd_options="  -A 127.0.0.1"
-EOF
+... #что значит и так далее... (НЕ ТРОГАЙТЕ БОЛЬШЕ НИЧЕГО, ПОСЛЕ ТОГО КАК ПОМЕНЯЛИ ospfd И ospf6d значения на yes выходим)
 
 systemctl enable --now frr
-
-# Перезагружаем машину
-reboot
+systemctl restart frr
