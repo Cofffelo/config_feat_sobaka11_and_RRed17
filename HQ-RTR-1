@@ -1,3 +1,5 @@
+hostnamectl set-hostname hq-rtr.au-team.irpo; exec bash
+
 nano /etc/net/ifaces/ens18/options
 BOOTPROTO=static
 TYPE=eth
