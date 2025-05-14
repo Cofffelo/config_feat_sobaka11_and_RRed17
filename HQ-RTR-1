@@ -130,7 +130,7 @@ timedatectl
 nano /etc/openssh/sshd_config
 Port 2024
 MaxAuthTries 2
-AllowUsers net_admin
+AllowUsers net_admin             
 PermitRootLogin no
 Banner /root/banner
 
@@ -139,6 +139,12 @@ Authorized access only
 
 systemctl enable --now sshd
 systemctl restart sshd
+
+#ДЛЯ ПРОВЕРКИ ССХ: 
+ssh net_admin@172.16.4.2 -p 2024
+yes
+P@$$word
+exit
 
 apt-get install frr -y
 nano /etc/frr/daemons
