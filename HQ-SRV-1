@@ -137,15 +137,8 @@ module(load="builtin:omfile" Template="RSYSLOG_TraditionalFileFormat"
        fileOwner="root"
        fileGroup="adm")
 
-global(workDirectory="/var/spool/rsyslog")
-
-# start log rotation via outchannel
-# outchannel definition
 $outchannel log_rotation,/opt/%HOSTNAME%/log_rotation.log, 52428800,/home/me/./log_rotation_script
-#  activate the channel and log everything to it
 *.* :omfile:$log_rotation
-# end log rotation via outchannel
-
 $template RemoteLogs,"/opt/%HOSTNAME%/%PROGRAMNAME%.log"
 *.* ?RemoteLogs
 & ~
