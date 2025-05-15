@@ -1,10 +1,12 @@
 #странный конфиг но по идее рабочий я разберусь завтра
 #!/bin/bash
 
-hostnamectl set-hostname hq-cli.au-team.irpo
+hostnamectl set-hostname hq-cli.au-team.irpo; exec bash
 
-echo "Обновляем систему..."
-apt-get update || { echo 'Ошибка обновления!'; exit 1; }
+nano /etc/resolv.conf
+nameserver 192.168.1.10
+
+apt-get update
 
 echo "Устанавливаем NFS-client..."
 apt-get install nfs-clients -y || { echo 'Ошибка установки NFS-common!'; exit 1; }
