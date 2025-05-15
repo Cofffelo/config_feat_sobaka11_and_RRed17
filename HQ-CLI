@@ -34,7 +34,9 @@ pool 192.168.44.5 iburst
 systemctl enable --now chronyd
 systemctl restart chronyd
 
-echo "Создаем пользователя SSH..."
+timedatectl set-timezone Asia/Krasnoyarsk
+date -s '2025-05-15 (часы:минуты)' смотрим на свои часы и пишем время заместо (часы:минуты) 
+
 useradd sshuser -u 1010 || { echo 'Ошибка добавления пользователя!'; exit 1; }
 
 echo "Проверяем идентификатор пользователя..."
