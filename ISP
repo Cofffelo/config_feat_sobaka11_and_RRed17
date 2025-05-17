@@ -31,7 +31,11 @@ service network restart
 systemctl enable iptables
 systemctl start iptables
 
-sed -i 's/#*PermitRootLogin.*/PermitRootLogin yes/' /etc/openssh/sshd_config
+# ахахах прикольная команда
+#  sed -i 's/#*PermitRootLogin.*/PermitRootLogin yes/' /etc/openssh/sshd_config
+
+nano /etc/openssh/sshd_config
+PermitRootLogin yes
 
 systemctl restart sshd.service
 
