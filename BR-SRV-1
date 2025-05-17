@@ -24,7 +24,7 @@ passwd sshuser
 P@ssw0rd
 P@ssw0rd
 
-echo '%WHEEL_USERS ALL=(ALL:ALL) NOPASSWD: ALL' >> /etc/sudoers
+echo 'WHEEL_USERS ALL=(ALL:ALL) NOPASSWD: ALL' >> /etc/sudoers
 usermod -aG wheel sshuser
 
 nano /etc/openssh/sshd_config
