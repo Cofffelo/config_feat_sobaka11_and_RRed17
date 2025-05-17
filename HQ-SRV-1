@@ -12,9 +12,7 @@ nano /etc/net/iface/ens18/ipv4route
 default via 192.168.1.1
 
 systemctl restart network
-
 apt-get update
-
 apt-get install dnsmasq -y
 
 nano /etc/dnsmasq.conf
@@ -43,7 +41,7 @@ passwd sshuser
 P@ssw0rd
 P@ssw0rd
 
-echo '%WHEEL_USERS ALL=(ALL:ALL) NOPASSWD: ALL' >> /etc/sudoers
+echo 'WHEEL_USERS ALL=(ALL:ALL) NOPASSWD: ALL' >> /etc/sudoers
 usermod -aG wheel sshuser
 
 nano /etc/openssh/sshd_config
