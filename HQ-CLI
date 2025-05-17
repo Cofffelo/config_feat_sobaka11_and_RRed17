@@ -1,80 +1,59 @@
-#странный конфиг но по идее рабочий я разберусь завтра
-#!/bin/bash
-
 hostnamectl set-hostname hq-cli.au-team.irpo; exec bash
 
+#  друзья если у вас перестаёт работать интернет на машине клиента то 
+#   вам надо повторить команды строчек под номером 6 и 7
+
 nano /etc/resolv.conf
-nameserver 192.168.1.10
+nameserver 192.168.1.10 
+search au-team.irpo
 
 apt-get update
 
-echo "Устанавливаем NFS-client..."
-apt-get install nfs-clients -y || { echo 'Ошибка установки NFS-common!'; exit 1; }
+apt-get install nfs-clients -y 
+apt-get install python3 -y
 
-echo "Устанавливаем python3"
-apt-get install python3 -y || { echo 'Ошибка установки python3!'; exit 1; }
+mkdir -p /mnt/nfs
 
-echo "Создаем точку монтирования..."
-mkdir -p /mnt/nfs || { echo 'Ошибка создания директории!'; exit 1; }
-
-echo "Настраиваем автоматическое монтирование..."
 cat <<EOF | tee -a /etc/fstab >&2
-192.168.1.10:/raid5/nfs  /mnt/nfs  nfs  defaults  0  0
+192.168.1.10:/raid5/nfs /mnt/nfs nfs defaults 0 0
 EOF
 
-echo "Монтируем раздел..."
-mount -a && mount -v || { echo 'Ошибка монтирования!'; exit 1; }
+mount -a
+mount -v
+touch /mnt/nfs/bbbbb
 
-echo "Тестовая запись файла..."
-touch /mnt/nfs/bbbbb || { echo 'Ошибка записи файла!'; exit 1; }
-
-nano /etc/chrony.conf
-pool 192.168.44.5 iburst
-
-systemctl enable --now chronyd
-systemctl restart chronyd
+#  смотрим на свои часы в реальной жизни и пишем время в машину клиента (часы:минуты)
+#  перед командой date -s пропишите команду на строчке под номером 31 чтобы
+#  поставить верную временную зону и не было косяка со временем как и у меня
 
 timedatectl set-timezone Asia/Krasnoyarsk
-date -s '2025-05-15 (часы:минуты)' смотрим на свои часы и пишем время заместо (часы:минуты) 
+date -s '2025-05-15 (часы:минуты)'  
 
-useradd sshuser -u 1010 || { echo 'Ошибка добавления пользователя!'; exit 1; }
-
-echo "Проверяем идентификатор пользователя..."
+useradd sshuser -u 1010
 id sshuser
-
-echo "Меняем пароль пользователя..."
 passwd sshuser
 
-echo "Редактируем sudoers-файл..."
 cat <<EOF | tee -a /etc/sudoers >&2
 WHEEL_USERS ALL=(ALL:ALL) NOPASSWD: ALL
 EOF
 
-echo "Добавляем пользователя в группу wheel..."
-usermod -aG wheel sshuser || { echo 'Ошибка добавления в группу!'; exit 1; }
+usermod -aG wheel sshuser 
 
-echo "Настраиваем SSH-сервер..."
-cat <<EOF | tee /etc/openssh/sshd_config >&2
+nano /etc/openssh/sshd_config 
 Port 22
 MaxAuthTries 2
 AllowUsers sshuser
 PermitRootLogin no
 Banner /root/banner
-EOF
 
-echo "Создаем баннер авторизации..."
-sh -c 'echo "Authorized access only" > /root/banner'
+nano /root/banner
+Authorized access only
 
-echo "Перезапускаем SSH-сервис..."
-systemctl enable --now sshd && systemctl restart sshd || { echo 'Ошибка запуска SSH!'; exit 1; }
+systemctl enable --now sshd
+systemctl restart sshd 
 
-echo "Устанавливаем Яндекс Браузер..."
-apt-get update && apt-get install yandex-browser-stable -y || { echo 'Ошибка установки Яндекс-Браузера!'; exit 1; }
+apt-get update
+apt-get install yandex-browser-stable -y 
 
-echo "Настраиваем nameserver"
-cat <<EOF | tee /etc/resolv.conf >&2
-search au-team.irpo
-
-echo "Удаляем Python2.7"
-rm /usr/bin/python2.7 -yes
-nameserver 192.168.1.2
+rm /usr/bin/python2.7 
+yes
