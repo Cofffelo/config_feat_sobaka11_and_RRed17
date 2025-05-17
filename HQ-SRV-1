@@ -106,6 +106,9 @@ service mysqld start
 mysql_secure_installation
 
 mysql -u root -p
+# если просит пароль то просто нажимайте энтер
+
+Ctrl+D
 
 curl -L https://github.com/moodle/moodle/archive/refs/tags/v4.5.0.zip > /root/moodle.zip
 unzip /root/moodle.zip -d /var/www/html
